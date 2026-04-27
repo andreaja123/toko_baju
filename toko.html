@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Souvenir Catalog - Full Features</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --accent: #f43f5e;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: var(--bg-gradient); background-attachment: fixed; color: var(--text-main); overflow-x: hidden; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+        /* NAVBAR & SEARCH */
+        nav {
+            position: fixed; top: 0; width: 100%; z-index: 1000;
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .nav-content { display: flex; justify-content: space-between; align-items: center; height: 70px; }
+        .logo { font-size: 1.5rem; font-weight: 600; }
+        .logo span { color: var(--accent); }
+        
+        .search-bar {
+            background: var(--glass-bg); border: 1px solid var(--glass-border); color: white;
+            padding: 8px 15px; border-radius: 20px; width: 250px; outline: none;
+        }
+        .search-bar::placeholder { color: var(--text-dim); }
+        
+        .cart-box {
+            background: var(--glass-bg); padding: 5px 15px; border-radius: 20px;
+            border: 1px solid var(--glass-border); cursor: pointer; transition: 0.3s;
+        }
+        .cart-box:hover { background: rgba(99, 102, 241, 0.2); }
+
+        /* HERO & FILTER */
+        .hero { padding: 120px 0 60px; text-align: center; }
+        .hero h1 { font-size: clamp(2rem, 4vw, 3rem); margin-bottom: 20px; }
+        .filter-container { display: flex; justify-content: center; gap: 10px; margin-bottom: 40px; flex-wrap: wrap; }
+        .filter-btn {
+            background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-main);
+            padding: 8px 20px; border-radius: 30px; cursor: pointer; transition: 0.3s;
+        }
+        .filter-btn.active, .filter-btn:hover { background: var(--primary); border-color: var(--primary); }
+
+        /* PRODUCT GRID */
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px; margin-bottom: 80px; }
+        .card {
+            background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid var(--glass-border);
+            border-radius: 20px; padding: 20px; transition: 0.3s; position: relative; cursor: pointer;
+        }
+        .card:hover { transform: translateY(-8px); border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.08); }
+        .card img { width: 100%; height: 220px; object-fit: cover; border-radius: 14px; margin-bottom: 15px; }
+        .badge-grade { position: absolute; top: 30px; right: 30px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 600; }
+        .grade-Premium { color: #10b981; } /* Hijau untuk Premium */
+        .grade-Standard { color: #eab308; } /* Kuning untuk Standard */
+        
+        .card h3 { font-size: 1.1rem; margin-bottom: 5px; }
+        .stock-info { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px; display: block; }
+        .card .price { color: var(--accent); font-weight: 600; font-size: 1.2rem; display: block; margin-bottom: 15px; }
+        .btn-add {
+            width: 100%; padding: 10px; border: none; border-radius: 12px; background: var(--primary);
+            color: white; font-weight: 600; cursor: pointer; transition: 0.3s; z-index: 2; position: relative;
+        }
+        .btn-add:hover { opacity: 0.9; box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4); }
+
+        /* SIDEBAR CART */
+        .cart-sidebar {
+            position: fixed; top: 0; right: -400px; width: 350px; max-width: 100%; height: 100vh;
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); border-left: 1px solid var(--glass-border);
+            z-index: 2000; transition: 0.4s ease; padding: 20px; display: flex; flex-direction: column;
+        }
+        .cart-sidebar.open { right: 0; }
+        .cart-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 15px; }
+        .close-cart { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+        .cart-items { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .cart-item { display: flex; gap: 10px; background: var(--glass-bg); padding: 10px; border-radius: 10px; }
+        .cart-item img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; }
+        .cart-item-details { flex: 1; }
+        .cart-item-title { font-size: 0.9rem; font-weight: 600; }
+        .cart-item-price { color: var(--accent); font-size: 0.9rem; }
+        .cart-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
+        .btn-remove { background: #ef4444; border: none; color: white; padding: 3px 8px; border-radius: 5px; cursor: pointer; font-size: 0.7rem; }
+        .cart-footer { border-top: 1px solid var(--glass-border); padding-top: 15px; margin-top: 15px; }
+        .total-price { display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 600; margin-bottom: 15px; }
+        .btn-checkout { width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; }
+
+        /* MODAL DETAIL */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px); z-index: 3000; display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .modal-content {
+            background: var(--bg-gradient); border: 1px solid var(--glass-border); width: 90%; max-width: 600px;
+            border-radius: 20px; padding: 20px; display: flex; gap: 20px; position: relative; transform: translateY(20px); transition: 0.3s;
+        }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; cursor: pointer; color: white; background: none; border: none; }
+        .modal-img { width: 50%; border-radius: 15px; object-fit: cover; }
+        .modal-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        
+        /* TOAST NOTIFICATION */
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 4000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: rgba(16, 185, 129, 0.9); color: white; padding: 12px 20px; border-radius: 10px; backdrop-filter: blur(5px); animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
+
+        @media (max-width: 768px) {
+            .nav-content { flex-direction: column; height: auto; padding: 15px 0; gap: 15px; }
+            .modal-content { flex-direction: column; }
+            .modal-img { width: 100%; height: 200px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="container nav-content">
+            <div class="logo">SOUV<span>APP</span></div>
+            <input type="text" id="searchInput" class="search-bar" placeholder="Cari produk..." onkeyup="searchProducts()">
+            <div class="cart-box" onclick="toggleCart()">
+                🛒 <span id="cart-count">0</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3>Keranjang Anda</h3>
+            <button class="close-cart" onclick="toggleCart()">×</button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            </div>
+        <div class="cart-footer">
+            <div class="total-price">
+                <span>Total:</span>
+                <span id="cartTotal">Rp 0</span>
+            </div>
+            <button class="btn-checkout" onclick="alert('Melanjutkan ke pembayaran...')">Checkout Sekarang</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="productModal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeModal(true)">×</button>
+            <img src="" alt="" id="modalImg" class="modal-img">
+            <div class="modal-info">
+                <span class="badge-grade" id="modalGrade" style="position: static; display: inline-block; width: fit-content; margin-bottom: 10px;"></span>
+                <h2 id="modalTitle">Title</h2>
+                <p style="color: var(--text-dim); font-size: 0.9rem; margin: 10px 0;">Produk berkualitas tinggi dengan material terbaik. Cocok untuk penggunaan sehari-hari maupun koleksi eksklusif.</p>
+                <p><strong>Stok:</strong> <span id="modalStock"></span> pcs</p>
+                <h3 class="price" id="modalPrice" style="color: var(--accent); margin: 15px 0;"></h3>
+                <button class="btn-add" id="modalAddBtn">Tambah ke Keranjang</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <section class="hero container">
+        <div class="filter-container">
+            <button class="filter-btn active" onclick="filterData('all', this)">Semua</button>
+            <button class="filter-btn" onclick="filterData('t-shirt', this)">Kaos</button>
+            <button class="filter-btn" onclick="filterData('hoodie', this)">Hoodie</button>
+            <button class="filter-btn" onclick="filterData('accessories', this)">Aksesoris</button>
+        </div>
+        <div class="product-grid" id="productGrid"></div>
+    </section>
+
+    <script>
+        // DATA PRODUK
+        const products = [
+            { id: 1, name: "Signature T-Shirt Grey", category: "t-shirt", price: 125000, stock: 150, grade: "Premium", img: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=500&q=80" },
+            { id: 2, name: "Urban Hoodie Midnight", category: "hoodie", price: 350000, stock: 45, grade: "Premium", img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=500&q=80" },
+            { id: 3, name: "Industrial Totebag", category: "accessories", price: 85000, stock: 200, grade: "Standard", img: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=500&q=80" },
+            { id: 4, name: "Classic Polo White", category: "t-shirt", price: 150000, stock: 80, grade: "Standard", img: "https://images.unsplash.com/photo-1581655353564-df123a1eb820?auto=format&fit=crop&w=500&q=80" },
+            { id: 5, name: "Streetwear Hoodie Sand", category: "hoodie", price: 320000, stock: 30, grade: "Premium", img: "https://images.unsplash.com/photo-1509942774463-acf339cfc7a5?auto=format&fit=crop&w=500&q=80" },
+            { id: 6, name: "Romantic Couple Tees (Set)", category: "t-shirt", price: 220000, stock: 25, grade: "Premium", img: "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=500&q=80" },
+        ];
+
+        let cart = [];
+        let currentFilter = 'all';
+
+        // FORMAT RUPIAH
+        const formatRp = (num) => 'Rp ' + num.toLocaleString('id-ID');
+
+        // RENDER PRODUK
+        function displayProducts(data) {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+            
+            if(data.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Produk tidak ditemukan.</p>';
+                return;
+            }
+
+            data.forEach(item => {
+                grid.innerHTML += `
+                    <div class="card" onclick="openModal(${item.id})">
+                        <span class="badge-grade grade-${item.grade}">${item.grade} Quality</span>
+                        <img src="${item.img}" alt="${item.name}">
+                        <h3>${item.name}</h3>
+                        <span class="stock-info">Tersedia: ${item.stock} pcs</span>
+                        <span class="price">${formatRp(item.price)}</span>
+                        <button class="btn-add" onclick="event.stopPropagation(); addToCart(${item.id})">Tambah ke Keranjang</button>
+                    </div>
+                `;
+            });
+        }
+
+        // FILTER & PENCARIAN
+        function filterData(category, element) {
+            currentFilter = category;
+            if(element) {
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                element.classList.add('active');
+            }
+            searchProducts(); // Gabungkan filter dengan search
+        }
+
+        function searchProducts() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            let filtered = products.filter(p => p.name.toLowerCase().includes(keyword));
+            if(currentFilter !== 'all') {
+                filtered = filtered.filter(p => p.category === currentFilter);
+            }
+            displayProducts(filtered);
+        }
+
+        // FUNGSI KERANJANG
+        function addToCart(id) {
+            const product = products.find(p => p.id === id);
+            const existingItem = cart.find(item => item.id === id);
+
+            if(existingItem) {
+                existingItem.qty += 1;
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+            
+            updateCartUI();
+            showToast(`${product.name} ditambahkan!`);
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            document.getElementById('cart-count').innerText = cart.reduce((sum, item) => sum + item.qty, 0);
+            
+            const cartContainer = document.getElementById('cartItems');
+            cartContainer.innerHTML = '';
+            
+            let total = 0;
+            cart.forEach(item => {
+                total += (item.price * item.qty);
+                cartContainer.innerHTML += `
+                    <div class="cart-item">
+                        <img src="${item.img}" alt="">
+                        <div class="cart-item-details">
+                            <div class="cart-item-title">${item.name}</div>
+                            <div class="cart-item-price">${formatRp(item.price)} x ${item.qty}</div>
+                            <div class="cart-controls">
+                                <span>Sub: ${formatRp(item.price * item.qty)}</span>
+                                <button class="btn-remove" onclick="removeFromCart(${item.id})">Hapus</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('cartTotal').innerText = formatRp(total);
+        }
+
+        function toggleCart() {
+            document.getElementById('cartSidebar').classList.toggle('open');
+        }
+
+        // MODAL LOGIC
+        function openModal(id) {
+            const product = products.find(p => p.id === id);
+            document.getElementById('modalImg').src = product.img;
+            document.getElementById('modalTitle').innerText = product.name;
+            document.getElementById('modalPrice').innerText = formatRp(product.price);
+            document.getElementById('modalStock').innerText = product.stock;
+            
+            const gradeBadge = document.getElementById('modalGrade');
+            gradeBadge.innerText = `${product.grade} Quality`;
+            gradeBadge.className = `badge-grade grade-${product.grade}`;
+
+            const addBtn = document.getElementById('modalAddBtn');
+            addBtn.onclick = () => {
+                addToCart(product.id);
+                closeModal(true);
+            };
+
+            document.getElementById('productModal').classList.add('active');
+        }
+
+        function closeModal(force = false) {
+            if(force || event.target.id === 'productModal') {
+                document.getElementById('productModal').classList.remove('active');
+            }
+        }
+
+        // TOAST NOTIFICATION
+        function showToast(message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerText = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => { toast.remove(); }, 3000);
+        }
+
+        // INIT
+        window.onload = () => displayProducts(products);
+    </script>
+</body>
+</html>
